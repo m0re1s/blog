@@ -1,0 +1,3 @@
+# Local docs directory - not tracked by git, not pushed to remote
+# Contains deployment guide (with SSH config), usage guide, and problem logs
+local_docs/
