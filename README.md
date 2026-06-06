@@ -23,7 +23,8 @@
 ├── local_docs/         # ⛔ 本地文档目录（不纳入 git）
 │   ├── DEPLOY_GUIDE.md # 部署指南（SSH、Git 配置等）
 │   ├── USAGE_GUIDE.md  # 使用指南（本地开发、新增文章等）
-│   └── PROBLEM_LOG.md  # 问题与解决方案记录
+│   ├── PROBLEM_LOG.md  # 问题与解决方案记录
+│   └── AGENT_GUIDE.md  # AI Agent 处理指南（先扫描再处理原则等）
 └── README.md           # 项目说明（本文件）
 ```
 
