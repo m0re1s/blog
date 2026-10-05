@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>页面未找到</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <section class="section">
+            <h1>404</h1>
+            <p id="msg">页面不存在。</p>
+            <p><a href="index.html">← 返回主页</a></p>
+        </section>
+    </div>
+
+    <script>
+        // 短链接：/blog/xxxxxx → 文章页。码为文件名的 djb2 哈希（模 36^6）的 6 位 base36，
+        // 由文件名确定性派生，新增文章无需注册；文章列表从 index.html 动态解析。
+        // 仅在 GitHub Pages 上生效（404 回退机制），本地 python -m http.server 不支持。
+        (async () => {
+            const msg = document.getElementById('msg');
+            const code = decodeURIComponent(location.pathname.split('/').pop() || '');
+            if (!/^[0-9a-z]{6}$/.test(code)) return;
+            try {
+                const res = await fetch('index.html');
+                const files = [...(await res.text()).matchAll(/post\.html\?file=([^"'\s&]+)/g)]
+                    .map(m => decodeURIComponent(m[1]));
+                for (const f of files) {
+                    if (shortCode(f) === code) {
+                        location.replace('post.html?file=' + f);
+                        return;
+                    }
+                }
+                msg.textContent = '未找到该短链接对应的文章。';
+            } catch (e) {
+                msg.textContent = '短链接解析失败。';
+            }
+        })();
+
+        function shortCode(str) {
+            let h = 5381;
+            for (let i = 0; i < str.length; i++) h = (h * 33 + str.charCodeAt(i)) >>> 0;
+            return (h % 2176782336).toString(36).padStart(6, '0');
+        }
+    </script>
+</body>
+</html>

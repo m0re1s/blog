@@ -19,7 +19,8 @@
         <footer><p>© 2026 m0re1s · Powered by GitHub Pages</p></footer>
     </div>
 
-    <script>
+    <!-- KaTeX 脚本带 defer，内联渲染脚本必须同样 defer：保证执行时 renderMathInElement 已就绪（否则本地预览公式不渲染） -->
+    <script defer>
         // 从 URL 获取要加载的 markdown 文件名
         const params = new URLSearchParams(window.location.search);
         const file = params.get('file');
