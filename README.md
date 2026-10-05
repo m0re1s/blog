@@ -1,6 +1,8 @@
 # m0re1s 个人主页
 
 > 纯前端静态博客站点，支持 Markdown / LaTeX / PDF 三种文章类型，可通过 GitHub Pages 部署。
+>
+> 在线访问：**https://m0re1s.github.io/blog/**
 
 ## 项目简介
 
