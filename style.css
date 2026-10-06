@@ -30,4 +30,8 @@ footer { margin-top: 3rem; font-size: .85rem; color: #999; text-align: center; }
 #content img { max-width: 100%; height: auto; border-radius: 4px; margin-bottom: .8rem; }
 #content .katex-display { margin: 1rem 0; }
 .back { display: inline-block; margin-bottom: 1rem; font-size: .9rem; }
+.shortlink { margin-top: 2rem; padding-top: .8rem; border-top: 1px dashed #ddd; font-size: .85rem; color: #666; }
+.shortlink code { background: none; padding: 0; }
+.shortlink button { margin-left: .4rem; font-size: .8rem; padding: .1rem .5rem; border: 1px solid #ccc; border-radius: 3px; background: #fff; color: #333; cursor: pointer; }
+.shortlink button:hover { background: #f0f0f0; }
 iframe { width: 100%; height: 600px; border: 1px solid #ddd; }

@@ -18,6 +18,7 @@
     <script>
         // 短链接：/blog/xxxxxx → 文章页。码为文件名的 djb2 哈希（模 36^6）的 6 位 base36，
         // 由文件名确定性派生，新增文章无需注册；文章列表从 index.html 动态解析。
+        // ⚠️ shortCode 算法须与 post.html（文章页底部短链展示）保持一致，改动需同步两处。
         // 仅在 GitHub Pages 上生效（404 回退机制），本地 python -m http.server 不支持。
         (async () => {
             const msg = document.getElementById('msg');

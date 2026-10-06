@@ -21,9 +21,10 @@
 每篇文章可通过 6 位短码访问，如 `https://m0re1s.github.io/blog/fqkqyo`：
 
 - 短码 = 文件名的 djb2 哈希（模 36⁶）转 6 位 base36，**由文件名确定性派生**，新增文章无需任何注册步骤
+- **文章页底部自动显示本文短链**并提供一键复制按钮，读者无需查询；短码由 `post.html` 在浏览器本地用同一算法计算
 - GitHub Pages 对不存在的路径会返回仓库根的 `404.html`，其内嵌脚本从 `index.html` 解析出全部文章文件名、逐个计算短码并匹配，命中后跳转 `post.html?file=...`
 - **不要重命名文章文件**，否则短码随之改变，旧短链接失效
-- 该机制依赖 GitHub Pages 的 404 回退，本地 `python -m http.server` 下不可用（本地预览仍走 `post.html?file=...`）
+- 该机制依赖 GitHub Pages 的 404 回退，本地 `python -m http.server` 下不可用（本地预览仍走 `post.html?file=...`）；`404.html` 与 `post.html` 各有一份 `shortCode` 实现，**改动算法须同步两处**
 
 文章列表在 `index.html` 中**硬编码**，新增文章需手动在 `<ul class="post-list">` 中添加 `<li>` 条目。
 

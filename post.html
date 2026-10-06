@@ -21,6 +21,14 @@
 
     <!-- KaTeX 脚本带 defer，内联渲染脚本必须同样 defer：保证执行时 renderMathInElement 已就绪（否则本地预览公式不渲染） -->
     <script defer>
+        // 短码：文件名的 djb2 哈希（模 36^6）的 6 位 base36。
+        // ⚠️ 算法须与 404.html 中 shortCode 保持一致，改动需同步两处。
+        function shortCode(str) {
+            let h = 5381;
+            for (let i = 0; i < str.length; i++) h = (h * 33 + str.charCodeAt(i)) >>> 0;
+            return (h % 2176782336).toString(36).padStart(6, '0');
+        }
+
         // 从 URL 获取要加载的 markdown 文件名
         const params = new URLSearchParams(window.location.search);
         const file = params.get('file');
@@ -44,6 +52,20 @@
                     // 更新页面标题
                     const h1 = document.querySelector('#article h1');
                     if (h1) document.title = h1.textContent;
+                    // 文章末尾显示短链（算法须与 404.html 一致），供复制分享
+                    const shortUrl = location.origin + location.pathname.replace(/post\.html.*$/, '') + shortCode(file);
+                    const sl = document.createElement('p');
+                    sl.className = 'shortlink';
+                    sl.innerHTML = '本文短链：<code></code> <button type="button">复制</button>';
+                    sl.querySelector('code').textContent = shortUrl;
+                    sl.querySelector('button').addEventListener('click', () => {
+                        const btn = sl.querySelector('button');
+                        navigator.clipboard.writeText(shortUrl).then(() => {
+                            btn.textContent = '已复制';
+                            setTimeout(() => { btn.textContent = '复制'; }, 1500);
+                        }).catch(() => { btn.textContent = '复制失败'; });
+                    });
+                    document.getElementById('article').appendChild(sl);
                 })
                 .catch(() => {
                     document.getElementById('article').innerHTML = '<p>文件加载失败。</p>';
