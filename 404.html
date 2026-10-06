@@ -17,7 +17,8 @@
 
     <script>
         // 短链接：/blog/xxxxxx → 文章页。码为文件名的 djb2 哈希（模 36^6）的 6 位 base36，
-        // 由文件名确定性派生，新增文章无需注册；文章列表从 index.html 动态解析。
+        // 由文件名确定性派生，新增文章无需注册；文章清单从 index.html 的 posts-data JSON 读取，
+        // 清单缺失/损坏时回退为 post.html?file= 链接正则提取。
         // ⚠️ shortCode 算法须与 post.html（文章页底部短链展示）保持一致，改动需同步两处。
         // 仅在 GitHub Pages 上生效（404 回退机制），本地 python -m http.server 不支持。
         (async () => {
@@ -25,9 +26,15 @@
             const code = decodeURIComponent(location.pathname.split('/').pop() || '');
             if (!/^[0-9a-z]{6}$/.test(code)) return;
             try {
-                const res = await fetch('index.html');
-                const files = [...(await res.text()).matchAll(/post\.html\?file=([^"'\s&]+)/g)]
-                    .map(m => decodeURIComponent(m[1]));
+                const html = await (await fetch('index.html')).text();
+                let files = [];
+                const m = html.match(/<script id="posts-data"[^>]*>([\s\S]*?)<\/script>/);
+                if (m) {
+                    try { files = JSON.parse(m[1]).map(p => p.file); } catch (e) { /* 走正则兜底 */ }
+                }
+                if (!files.length) {
+                    files = [...html.matchAll(/post\.html\?file=([^"'\s&]+)/g)].map(x => decodeURIComponent(x[1]));
+                }
                 for (const f of files) {
                     if (shortCode(f) === code) {
                         location.replace('post.html?file=' + f);

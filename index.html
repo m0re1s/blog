@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="m0re1s 的个人博客：数学竞赛题目、笔记与思考。">
     <title>m0re1s - 个人主页</title>
     <link rel="stylesheet" href="style.css">
 </head>
@@ -15,23 +16,18 @@
         </section>
 
         <section class="section">
-            <h2>联系方式</h2>
-            <ul class="contact-list">
-                <li><strong>GitHub</strong>: <a href="https://github.com/m0re1s" target="_blank">@m0re1s</a></li>
-                <li><strong>Email</strong>: <a href="mailto:your@email.com">your@email.com</a></li>
-            </ul>
+            <h2>题目与笔记</h2>
+            <input id="search" type="search" placeholder="搜索标题、标签或正文…" autocomplete="off">
+            <div id="chips" class="chips"></div>
+            <p id="count" class="count"></p>
+            <div id="list"></div>
+            <noscript><p class="empty">文章列表需要启用 JavaScript 才能显示。</p></noscript>
         </section>
 
         <section class="section">
-            <h2>题目与笔记</h2>
-            <ul class="post-list">
-                <li><span class="tag tag-md">MD</span> <a href="post.html?file=example-md.md">示例：Markdown 题目</a></li>
-                <li><span class="tag tag-tex">TeX</span> <a href="post.html?file=example-tex.md">示例：数学证明</a></li>
-                <li><span class="tag tag-tex">TeX</span> <a href="post.html?file=geometry-perpendicular.md">平面几何：证明 BR⊥CR</a></li>
-                <li><span class="tag tag-tex">TeX</span> <a href="post.html?file=test-table-image.md">测试页：表格与图片</a></li>
-                <li><span class="tag tag-tex">TeX</span> <a href="post.html?file=m26072301-imo2026D1T2.md">IMO2026D1T2</a></li>
-                <li><span class="tag tag-tex">TeX</span> <a href="post.html?file=agent-tips.md">Agent 使用技巧</a></li>
-                <li><span class="tag tag-tex">TeX</span> <a href="post.html?file=mstd-seven-elements.md">“和”多还是“差”多？——七元集合的一个初等定理</a></li>
+            <h2>联系方式</h2>
+            <ul class="contact-list">
+                <li><strong>GitHub</strong>: <a href="https://github.com/m0re1s" target="_blank">@m0re1s</a></li>
             </ul>
         </section>
 
@@ -39,5 +35,124 @@
             <p>© 2026 m0re1s · Powered by GitHub Pages</p>
         </footer>
     </div>
+
+    <!-- 文章清单：全站唯一数据源（首页列表、文章页日期/标签行、404.html 短链解析均从此读取）。
+         新增文章 = posts/ 建 .md + 此处加一行（展示按 date 倒序，与数组顺序无关，建议新条目放最前）。
+         字段：file（⚠️ 勿改名，短码随之失效）/ title（⚠️ 勿含 </script）/ date（YYYY-MM-DD）/ tags / fmt（MD|TeX|PDF）。 -->
+    <script id="posts-data" type="application/json">
+    [
+      {"file": "mstd-seven-elements.md", "title": "“和”多还是“差”多？——七元集合的一个初等定理", "date": "2026-10-06", "tags": ["数学", "笔记"], "fmt": "TeX"},
+      {"file": "agent-tips.md", "title": "Agent 使用技巧", "date": "2026-10-06", "tags": ["AI", "工具"], "fmt": "TeX"},
+      {"file": "m26072301-imo2026D1T2.md", "title": "IMO2026D1T2", "date": "2026-07-23", "tags": ["数学", "竞赛"], "fmt": "TeX"},
+      {"file": "geometry-perpendicular.md", "title": "平面几何：证明 BR⊥CR", "date": "2026-06-05", "tags": ["数学", "几何"], "fmt": "TeX"}
+    ]
+    </script>
+
+    <script>
+    (() => {
+        const POSTS = JSON.parse(document.getElementById('posts-data').textContent);
+        const listEl = document.getElementById('list');
+        const chipsEl = document.getElementById('chips');
+        const searchEl = document.getElementById('search');
+        const countEl = document.getElementById('count');
+
+        let activeTag = null;   // 当前选中的标签筛选（null = 全部）
+        let fullText = null;    // {file: 正文小写文本}，首次实际搜索时才拉取正文构建
+        let indexing = false;
+
+        const esc = s => String(s).replace(/[&<>"']/g, c =>
+            ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
+
+        function filtered() {
+            const q = searchEl.value.trim().toLowerCase();
+            return POSTS
+                .filter(p => {
+                    if (activeTag && !p.tags.includes(activeTag)) return false;
+                    if (!q) return true;
+                    if (p.title.toLowerCase().includes(q)) return true;
+                    if (p.tags.some(t => t.toLowerCase().includes(q))) return true;
+                    return fullText ? (fullText[p.file] || '').includes(q) : false;
+                })
+                .sort((a, b) => b.date.localeCompare(a.date));
+        }
+
+        function render() {
+            const q = searchEl.value.trim().toLowerCase();
+            const posts = filtered();
+            const building = q && !fullText && indexing;
+            countEl.textContent = !(q || activeTag) ? '共 ' + posts.length + ' 篇'
+                : posts.length ? '筛到 ' + posts.length + ' 篇' + (building ? '（正在建立全文索引…）' : '')
+                : (building ? '正在建立全文索引…' : '没有匹配的文章');
+            let html = '', year = '';
+            for (const p of posts) {
+                const y = p.date.slice(0, 4);
+                if (y !== year) { html += '<h3 class="year">' + y + '</h3>'; year = y; }
+                html += '<div class="post-item">'
+                    + '<div class="post-line">'
+                    + '<span class="tag tag-' + esc(p.fmt.toLowerCase()) + '">' + esc(p.fmt) + '</span>'
+                    + '<a class="post-title" href="post.html?file=' + encodeURIComponent(p.file) + '">' + esc(p.title) + '</a>'
+                    + '<time class="post-date" datetime="' + p.date + '">' + p.date + '</time>'
+                    + '</div>'
+                    + '<div class="post-tags">'
+                    + p.tags.map(t => '<button type="button" class="mini-tag" data-tag="' + esc(t) + '">' + esc(t) + '</button>').join('')
+                    + '</div>'
+                    + '</div>';
+            }
+            listEl.innerHTML = html;
+        }
+
+        function renderChips() {
+            const counts = {};
+            POSTS.forEach(p => p.tags.forEach(t => { counts[t] = (counts[t] || 0) + 1; }));
+            chipsEl.innerHTML = Object.keys(counts)
+                .sort((a, b) => counts[b] - counts[a] || a.localeCompare(b, 'zh'))
+                .map(t => '<button type="button" class="chip' + (t === activeTag ? ' active' : '') + '" data-tag="' + esc(t) + '">'
+                    + esc(t) + '<span>' + counts[t] + '</span></button>')
+                .join('');
+        }
+
+        function setTag(t) {
+            activeTag = (t === activeTag) ? null : t;
+            renderChips();
+            render();
+        }
+
+        // 标签筛选：顶部 chips 与列表内小标签共用，点击切换，再点取消
+        chipsEl.addEventListener('click', e => {
+            const b = e.target.closest('.chip');
+            if (b) setTag(b.dataset.tag);
+        });
+        listEl.addEventListener('click', e => {
+            const b = e.target.closest('.mini-tag');
+            if (b) setTag(b.dataset.tag);
+        });
+
+        // 搜索：输入防抖过滤；首次实际搜索才懒构建全文索引，构建完自动重渲染
+        let debounce;
+        searchEl.addEventListener('input', () => {
+            clearTimeout(debounce);
+            debounce = setTimeout(() => {
+                const q = searchEl.value.trim().toLowerCase();
+                if (q && !fullText && !indexing) {
+                    indexing = true;
+                    Promise.all(POSTS.map(p =>
+                        fetch('posts/' + p.file).then(r => r.text()).then(t => [p.file, t.toLowerCase()])
+                    )).then(entries => {
+                        fullText = Object.fromEntries(entries);
+                        indexing = false;
+                        render();
+                    }).catch(() => { indexing = false; });
+                }
+                render();
+            }, 150);
+        });
+        searchEl.addEventListener('keydown', e => {
+            if (e.key === 'Escape') { searchEl.value = ''; render(); }
+        });
+
+        renderChips();
+        render();
+    })();
+    </script>
 </body>
 </html>

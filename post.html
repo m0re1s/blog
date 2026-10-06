@@ -93,6 +93,27 @@
                     // 更新页面标题
                     const h1 = document.querySelector('#article h1');
                     if (h1) document.title = h1.textContent;
+                    // 标题下日期/标签行：从 index.html 的 posts-data 清单读取（全站唯一数据源），读取失败静默跳过
+                    fetch('index.html').then(r => r.text()).then(html => {
+                        const m = html.match(/<script id="posts-data"[^>]*>([\s\S]*?)<\/script>/);
+                        if (!m) return;
+                        const post = JSON.parse(m[1]).find(p => p.file === file);
+                        if (!post || !h1) return;
+                        const meta = document.createElement('p');
+                        meta.className = 'post-meta';
+                        const time = document.createElement('time');
+                        time.dateTime = post.date;
+                        time.textContent = post.date;
+                        meta.appendChild(time);
+                        post.tags.forEach(t => {
+                            meta.appendChild(document.createTextNode(' '));
+                            const s = document.createElement('span');
+                            s.className = 'mini-tag';
+                            s.textContent = t;
+                            meta.appendChild(s);
+                        });
+                        h1.after(meta);
+                    }).catch(() => {});
                     // 文章末尾显示短链（算法须与 404.html 一致），供复制分享
                     const shortUrl = location.origin + location.pathname.replace(/post\.html.*$/, '') + shortCode(file);
                     const sl = document.createElement('p');

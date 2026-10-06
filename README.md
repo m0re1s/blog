@@ -6,13 +6,13 @@
 
 ## 项目简介
 
-这是一个轻量级的个人博客网站，无需任何后端服务或构建工具。所有文章以 Markdown 文件形式存放，通过 `marked.js` 渲染为 HTML，`KaTeX` 渲染数学公式。页面结构极简：一个主页（文章列表）+ 一个文章页（动态加载内容）。
+这是一个轻量级的个人博客网站，无需任何后端服务或构建工具。所有文章以 Markdown 文件形式存放，通过 `marked.js` 渲染为 HTML，`KaTeX` 渲染数学公式。页面结构极简：一个主页（文章列表，支持搜索 / 标签筛选 / 按年归档）+ 一个文章页（动态加载内容）。
 
 ## 页面路由
 
 | URL | 页面 | 说明 |
 |---|---|---|
-| `/` 或 `/index.html` | 主页 | 静态 HTML，展示文章列表 |
+| `/` 或 `/index.html` | 主页 | 文章清单（内嵌 JSON）+ 原生 JS 渲染列表，支持搜索、标签筛选、按年分组 |
 | `/post.html?file=xxx.md` | 文章页 | 通过 URL 参数指定文章文件名 |
 | `/xxxxxx`（6 位短码） | 文章页 | 短链接，由 `404.html` 解析后跳转到对应文章页 |
 
@@ -22,11 +22,11 @@
 
 - 短码 = 文件名的 djb2 哈希（模 36⁶）转 6 位 base36，**由文件名确定性派生**，新增文章无需任何注册步骤
 - **文章页底部自动显示本文短链**并提供一键复制按钮，读者无需查询；短码由 `post.html` 在浏览器本地用同一算法计算
-- GitHub Pages 对不存在的路径会返回仓库根的 `404.html`，其内嵌脚本从 `index.html` 解析出全部文章文件名、逐个计算短码并匹配，命中后跳转 `post.html?file=...`
+- GitHub Pages 对不存在的路径会返回仓库根的 `404.html`，其内嵌脚本从 `index.html` 的 `posts-data` JSON 清单读取全部文章文件名（清单缺失时回退为 `post.html?file=` 链接正则提取）、逐个计算短码并匹配，命中后跳转 `post.html?file=...`
 - **不要重命名文章文件**，否则短码随之改变，旧短链接失效
 - 该机制依赖 GitHub Pages 的 404 回退，本地 `python -m http.server` 下不可用（本地预览仍走 `post.html?file=...`）；`404.html` 与 `post.html` 各有一份 `shortCode` 实现，**改动算法须同步两处**
 
-文章列表在 `index.html` 中**硬编码**，新增文章需手动在 `<ul class="post-list">` 中添加 `<li>` 条目。
+文章清单以 `index.html` 内嵌的 `<script id="posts-data" type="application/json">` 为**全站唯一数据源**：主页列表、文章页的日期/标签行、404 短链解析都从这里读取。新增文章需在该数组中添加一行。
 
 ## 文章加载流程
 
@@ -37,7 +37,14 @@
     → marked.parse() 转为 HTML 并写入 #article
     → renderMathInElement() 渲染 LaTeX 公式
     → 更新页面标题为 h1 内容
+    → fetch('index.html') 解析 posts-data 清单，在标题下渲染日期/标签行（失败静默跳过）
 ```
+
+## 搜索与筛选（主页）
+
+- **搜索框**：标题 / 标签 / 文件名即时过滤；首次实际搜索时才按需拉取各篇文章正文构建全文索引（浏览器内存缓存，仅本次会话），之后正文也可搜。全程原生 JS，无任何依赖
+- **标签筛选**：顶部标签 chips 由清单中的 `tags` 自动汇总生成，点击筛选、再点取消；列表内每篇的小标签同样可点
+- **归档**：列表按 `date` 倒序自动分组，年份作小标题，无需手工维护
 
 ## 外部依赖（CDN）
 
@@ -47,7 +54,7 @@
 | KaTeX | 0.16.10 | LaTeX 数学公式渲染 | post.html |
 | KaTeX auto-render | 0.16.10 | 自动识别 `$...$` / `$$...$$` | post.html |
 
-主页 `index.html` 无外部 JS 依赖，纯静态 HTML + CSS。
+主页 `index.html` 无外部 JS 依赖：内嵌 JSON 清单 + 原生 JS 渲染列表；样式为单一 `style.css`（CSS 变量 + `prefers-color-scheme` 自动暗色模式）。
 
 ## 文章类型
 
@@ -63,11 +70,13 @@
 
 1. 在 `posts/` 目录创建 `.md` 文件
 2. 如需嵌入 PDF，将 PDF 放入 `assets/`，在 `.md` 中写 `<iframe src="assets/xxx.pdf"></iframe>`
-3. 在 `index.html` 文章列表添加条目：
+3. 在 `index.html` 的 `posts-data` JSON 清单中添加一行（日期取该文件首次提交日期，`git log --diff-filter=A --format="%ad" --date=short -- posts/文件名.md` 可查）：
 
-```html
-<li><span class="tag tag-md">MD</span> <a href="post.html?file=新文件名.md">文章标题</a></li>
+```json
+{"file": "新文件名.md", "title": "文章标题", "date": "2026-10-07", "tags": ["标签1", "标签2"], "fmt": "MD"}
 ```
+
+`fmt` 为类型徽章：`MD`（绿，纯 Markdown）/ `TeX`（红，含公式）/ `PDF`（蓝，嵌 PDF）。注意 `title` 中不能出现 `</script`。
 
 ## 本地开发
 
